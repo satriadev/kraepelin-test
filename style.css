@@ -1,29 +1,25 @@
 /* ═══════════════════════════════════════════════════════
-   Kraepelin Test — Pixel-Perfect Redesign Styles
-   Clean Minimalist Light Theme with Orange Highlights
+   Kraepelin Test — Styles v2
+   Clean Light Theme + Scrollable Stream + Pace Chart
    ═══════════════════════════════════════════════════════ */
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Clean Pure Light Palette */
   --bg-page: #ffffff;
   --bg-card: #ffffff;
   --border-subtle: #e2e8f0;
   --border-divider: #f1f5f9;
 
-  /* Typography */
   --text-primary: #1e293b;
   --text-secondary: #334155;
   --text-muted: #94a3b8;
 
-  /* Screenshot Orange Accent */
   --color-orange: #ff5722;
   --color-orange-hover: #f4511e;
   --color-orange-glow: rgba(255, 87, 34, 0.35);
 
-  /* Stats / Badges */
   --color-green: #10b981;
   --color-green-bg: #ecfdf5;
   --color-red: #ef4444;
@@ -98,7 +94,6 @@ header {
 }
 
 .stat-icon {
-  font-size: 1.1rem;
   width: 32px;
   height: 32px;
   display: flex;
@@ -108,25 +103,16 @@ header {
   flex-shrink: 0;
 }
 
-.timer-card .stat-icon {
-  background: #fff7ed;
-  color: var(--color-orange);
+.stat-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
-.correct-card .stat-icon {
-  background: var(--color-green-bg);
-  color: var(--color-green);
-}
-
-.wrong-card .stat-icon {
-  background: var(--color-red-bg);
-  color: var(--color-red);
-}
-
-.total-card .stat-icon {
-  background: var(--color-blue-bg);
-  color: var(--color-blue);
-}
+.timer-card .stat-icon { background: #fff7ed; color: var(--color-orange); }
+.correct-card .stat-icon { background: var(--color-green-bg); color: var(--color-green); }
+.wrong-card .stat-icon { background: var(--color-red-bg); color: var(--color-red); }
+.total-card .stat-icon { background: var(--color-blue-bg); color: var(--color-blue); }
 
 .stat-info {
   display: flex;
@@ -178,11 +164,10 @@ header {
 main {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: 0 16px;
   background: #ffffff;
 }
 
@@ -239,10 +224,19 @@ main {
 }
 
 .instructions-card h2 {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.heading-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  color: var(--color-orange);
+  flex-shrink: 0;
 }
 
 .instructions-card ul {
@@ -280,14 +274,8 @@ main {
   font-size: 0.82rem;
 }
 
-.example-label {
-  color: var(--color-orange);
-  font-weight: 700;
-}
-
-.example-content {
-  color: var(--text-secondary);
-}
+.example-label { color: var(--color-orange); font-weight: 700; }
+.example-content { color: var(--text-secondary); }
 
 kbd {
   display: inline-block;
@@ -329,41 +317,74 @@ kbd {
   transform: translateY(0);
 }
 
-/* ─── RUNNING Screen (Exact Screenshot Replica) ──── */
-.running-content {
-  width: 100%;
-  max-width: 720px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
-/* Container without heavy border box — pure clean white stream */
-.stream-container {
+/* ═══════════════════════════════════════════════════════
+   RUNNING SCREEN — Scrollable Question Stream
+   ═══════════════════════════════════════════════════════ */
+.running-content {
   width: 100%;
-  background: #ffffff;
+  height: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* Scrollable stream wrapper — takes all remaining space */
+.stream-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  /* Hide scrollbar for clean look */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.stream-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.stream-container {
+  width: 100%;
 }
 
 /* Question Block */
 .question-block {
-  padding: 42px 20px;
+  padding: 36px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
   width: 100%;
+  transition: opacity 0.15s;
 }
 
-/* Thin horizontal line separating questions (Exact match to screenshot) */
 .question-block + .question-block {
   border-top: 1px solid var(--border-divider);
 }
 
-/* Question Equation: 3  +  7 */
+/* Block States */
+.answered-block {
+  opacity: 0.45;
+}
+
+.active-block {
+  opacity: 1;
+}
+
+.upcoming-block {
+  opacity: 0.3;
+}
+
+/* Equation: a + b */
 .question-equation {
   font-family: var(--font-sans);
   font-size: 3.2rem;
@@ -373,7 +394,7 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 32px;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   line-height: 1;
   user-select: none;
   letter-spacing: -0.01em;
@@ -389,7 +410,7 @@ kbd {
   font-weight: 600;
 }
 
-/* Horizontal 0-9 Keypad Row (10 buttons in a clean row) */
+/* Horizontal 0–9 Keypad Row */
 .keypad-row {
   display: flex;
   align-items: center;
@@ -412,48 +433,83 @@ kbd {
   font-weight: 500;
   color: var(--text-secondary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  cursor: pointer;
+  cursor: default;
   user-select: none;
   transition: all 0.12s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Hover state on active row */
+/* Only active block keypad is clickable */
+.active-block .key-item {
+  cursor: pointer;
+}
+
 .active-block .key-item:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
 }
 
-/* Orange Selected Button (Exact replica of screenshot's orange 0 button!) */
-.key-item.selected,
-.active-block .key-item:active {
+/* Orange Selected Button */
+.key-item.selected {
   background-color: var(--color-orange) !important;
   border-color: var(--color-orange) !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   box-shadow: 0 4px 14px var(--color-orange-glow) !important;
-  transform: scale(0.98);
 }
 
-/* Previous answered block is static */
-.previous-block .key-item {
-  cursor: default;
+.active-block .key-item:active {
+  background-color: var(--color-orange);
+  border-color: var(--color-orange);
+  color: #ffffff;
+  font-weight: 700;
+  transform: scale(0.96);
 }
 
+/* Hint bar below stream */
 .hint-bar {
-  margin-top: 24px;
+  flex-shrink: 0;
+  padding: 12px 0;
   font-size: 0.85rem;
   color: var(--text-muted);
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-/* ─── FINISHED Screen ────────────────────────────── */
+.hint-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FINISHED SCREEN — Results + Pace Chart
+   ═══════════════════════════════════════════════════════ */
+.finished-scroll {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.finished-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .finished-content {
   text-align: center;
-  max-width: 440px;
+  max-width: 480px;
   width: 100%;
   background: #ffffff;
-  padding: 36px 32px;
+  padding: 32px 28px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
@@ -463,10 +519,42 @@ kbd {
   margin-bottom: 24px;
 }
 
-.result-emoji {
-  font-size: 3rem;
-  margin-bottom: 6px;
+.result-badge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
 }
+
+.result-badge {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fde68a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.25);
+}
+
+.result-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.result-svg {
+  width: 38px;
+  height: 38px;
+  display: block;
+}
+
+.result-svg-trophy { color: #d97706; }
+.result-svg-star { color: #f59e0b; }
+.result-svg-sparkles { color: #8b5cf6; }
+.result-svg-trend { color: #2563eb; }
 
 .result-title {
   font-size: 1.8rem;
@@ -488,8 +576,25 @@ kbd {
   padding: 14px 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
+
+.result-item-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.result-mini-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.result-correct .result-mini-icon { color: var(--color-green); }
+.result-wrong .result-mini-icon { color: var(--color-red); }
+.result-total .result-mini-icon { color: var(--color-blue); }
+.result-accuracy .result-mini-icon { color: var(--color-orange); }
 
 .result-item-value {
   font-family: var(--font-mono);
@@ -535,6 +640,73 @@ kbd {
   font-weight: 800;
   color: var(--color-orange);
   line-height: 1;
+}
+
+/* ─── Pace Chart Section ─────────────────────────── */
+.chart-section {
+  margin-bottom: 28px;
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px 16px 16px;
+}
+
+.chart-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-orange);
+  flex-shrink: 0;
+}
+
+.chart-wrapper {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.chart-wrapper canvas {
+  width: 100%;
+  display: block;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend-correct .legend-dot {
+  background: var(--color-green);
+}
+
+.legend-wrong .legend-dot {
+  background: var(--color-red);
 }
 
 /* ─── Mobile Responsiveness ──────────────────────── */
@@ -583,5 +755,13 @@ kbd {
     height: 38px;
     font-size: 1rem;
     border-radius: 8px;
+  }
+
+  .finished-content {
+    padding: 24px 16px;
+  }
+
+  .result-score-value {
+    font-size: 2.2rem;
   }
 }
