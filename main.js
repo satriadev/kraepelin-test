@@ -1,15 +1,16 @@
 // ═══════════════════════════════════════════════════════
-// Kraepelin Test — Main Application Logic
+// Kraepelin Test — Main Application Logic (Redesigned)
 // ═══════════════════════════════════════════════════════
 
-const DURATION_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
-const TIMER_UPDATE_INTERVAL = 100; // update timer display every 100ms
+const DURATION_MS = 5 * 60 * 1000; // 5 minutes in ms
+const TIMER_UPDATE_INTERVAL = 100; // timer tick interval
 
 // ─── State ───────────────────────────────────────────
 let state = {
   status: 'IDLE', // 'IDLE' | 'RUNNING' | 'FINISHED'
   endTime: null,
-  currentQuestion: null,
+  previousQuestion: null, // { a, b, correctDigit, chosenDigit }
+  currentQuestion: null,  // { a, b, correctDigit }
   correctCount: 0,
   wrongCount: 0,
   totalAnswered: 0,
@@ -28,17 +29,28 @@ const dom = {
   wrongCount: $('wrong-count'),
   wrongCard: $('wrong-card'),
   totalCount: $('total-count'),
-  questionA: $('question-a'),
-  questionB: $('question-b'),
-  questionContainer: $('question-container'),
-  feedbackFlash: $('feedback-flash'),
+
+  // Screens
   screenIdle: $('screen-idle'),
   screenRunning: $('screen-running'),
   screenFinished: $('screen-finished'),
+
+  // Stream Question Blocks
+  previousBlock: $('previous-block'),
+  prevA: $('prev-a'),
+  prevB: $('prev-b'),
+  prevKeypad: $('prev-keypad'),
+
+  currentBlock: $('current-block'),
+  currentA: $('current-a'),
+  currentB: $('current-b'),
+  currentKeypad: $('current-keypad'),
+
+  // Action Buttons
   btnStart: $('btn-start'),
   btnRestart: $('btn-restart'),
-  keypad: $('keypad'),
-  // Result screen
+
+  // Result Elements
   resultCorrect: $('result-correct'),
   resultWrong: $('result-wrong'),
   resultTotal: $('result-total'),
@@ -48,14 +60,15 @@ const dom = {
 };
 
 // ─── Question Generator ──────────────────────────────
+// Generates numbers 1..99 (or 1..9 weighted for familiar single-digit start)
 function generateQuestion() {
-  const a = Math.floor(Math.random() * 99) + 1; // 1..99
-  const b = Math.floor(Math.random() * 99) + 1; // 1..99
+  const a = Math.floor(Math.random() * 99) + 1;
+  const b = Math.floor(Math.random() * 99) + 1;
   const correctDigit = (a + b) % 10;
   return { a, b, correctDigit };
 }
 
-// ─── Screen Management ───────────────────────────────
+// ─── Screen Switcher ─────────────────────────────────
 function showScreen(screenName) {
   dom.screenIdle.classList.remove('active');
   dom.screenRunning.classList.remove('active');
@@ -66,7 +79,7 @@ function showScreen(screenName) {
   else if (screenName === 'FINISHED') dom.screenFinished.classList.add('active');
 }
 
-// ─── Timer ───────────────────────────────────────────
+// ─── Timer Functions ─────────────────────────────────
 function formatTime(ms) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -86,21 +99,45 @@ function updateTimer() {
 
   dom.timerDisplay.textContent = formatTime(remaining);
 
-  // Add urgency class when less than 60 seconds
   if (remaining <= 60000) {
     dom.timerCard.classList.add('urgent');
   }
-  // Add warning class when less than 30 seconds
   if (remaining <= 30000) {
     dom.timerCard.classList.add('critical');
   }
 }
 
-// ─── Render ──────────────────────────────────────────
-function renderQuestion() {
-  if (!state.currentQuestion) return;
-  dom.questionA.textContent = state.currentQuestion.a;
-  dom.questionB.textContent = state.currentQuestion.b;
+// ─── Render Logic ────────────────────────────────────
+function renderQuestions() {
+  // Render Previous Question (if exists)
+  if (state.previousQuestion) {
+    dom.previousBlock.style.display = 'flex';
+    dom.prevA.textContent = state.previousQuestion.a;
+    dom.prevB.textContent = state.previousQuestion.b;
+
+    // Highlight the chosen digit with orange active class
+    const prevKeys = dom.prevKeypad.querySelectorAll('.key-item');
+    prevKeys.forEach((key) => {
+      const digit = parseInt(key.dataset.digit, 10);
+      if (digit === state.previousQuestion.chosenDigit) {
+        key.classList.add('selected');
+      } else {
+        key.classList.remove('selected');
+      }
+    });
+  } else {
+    dom.previousBlock.style.display = 'none';
+  }
+
+  // Render Current Active Question
+  if (state.currentQuestion) {
+    dom.currentA.textContent = state.currentQuestion.a;
+    dom.currentB.textContent = state.currentQuestion.b;
+
+    // Clear selected state on active keypad
+    const currentKeys = dom.currentKeypad.querySelectorAll('.key-item');
+    currentKeys.forEach((key) => key.classList.remove('selected'));
+  }
 }
 
 function renderScores() {
@@ -109,42 +146,45 @@ function renderScores() {
   dom.totalCount.textContent = state.totalAnswered;
 }
 
-// ─── Feedback Flash ──────────────────────────────────
-function showFeedback(isCorrect) {
-  const flash = dom.feedbackFlash;
-  flash.className = 'feedback-flash';
-
-  // Force reflow to restart animation
-  void flash.offsetWidth;
-
-  flash.classList.add(isCorrect ? 'flash-correct' : 'flash-wrong');
-
-  // Also flash the corresponding score card
-  const card = isCorrect ? dom.correctCard : dom.wrongCard;
+function pulseCard(card) {
   card.classList.remove('pulse');
   void card.offsetWidth;
   card.classList.add('pulse');
 }
 
-// ─── Core Logic ──────────────────────────────────────
+// ─── Core Interaction Logic ──────────────────────────
 function submitAnswer(digit) {
   if (state.status !== 'RUNNING') return;
+
+  // Visual button feedback on current keypad
+  const activeBtn = dom.currentKeypad.querySelector(`[data-digit="${digit}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('selected');
+  }
 
   state.totalAnswered += 1;
   const isCorrect = digit === state.currentQuestion.correctDigit;
 
   if (isCorrect) {
     state.correctCount += 1;
+    pulseCard(dom.correctCard);
   } else {
     state.wrongCount += 1;
+    pulseCard(dom.wrongCard);
   }
 
-  showFeedback(isCorrect);
   renderScores();
 
-  // Generate and show new question immediately
+  // Shift current question to previous question
+  state.previousQuestion = {
+    ...state.currentQuestion,
+    chosenDigit: digit,
+    isCorrect,
+  };
+
+  // Generate new question immediately
   state.currentQuestion = generateQuestion();
-  renderQuestion();
+  renderQuestions();
 }
 
 function startSession() {
@@ -153,16 +193,18 @@ function startSession() {
   state.wrongCount = 0;
   state.totalAnswered = 0;
   state.endTime = Date.now() + DURATION_MS;
+  state.previousQuestion = null;
   state.currentQuestion = generateQuestion();
 
   // Reset UI
   dom.timerCard.classList.remove('urgent', 'critical');
   dom.timerDisplay.textContent = '05:00';
   renderScores();
-  renderQuestion();
+  renderQuestions();
   showScreen('RUNNING');
 
   // Start timer
+  if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(updateTimer, TIMER_UPDATE_INTERVAL);
 }
 
@@ -173,19 +215,16 @@ function finishSession() {
 
   dom.timerDisplay.textContent = '00:00';
 
-  // Calculate results
   const accuracy = state.totalAnswered === 0
     ? 0
     : (state.correctCount / state.totalAnswered) * 100;
 
-  // Pick result emoji
   let emoji = '🎯';
   if (accuracy >= 90) emoji = '🏆';
   else if (accuracy >= 75) emoji = '🌟';
   else if (accuracy >= 50) emoji = '💪';
   else emoji = '📈';
 
-  // Populate result screen
   dom.resultCorrect.textContent = state.correctCount;
   dom.resultWrong.textContent = state.wrongCount;
   dom.resultTotal.textContent = state.totalAnswered;
@@ -196,31 +235,12 @@ function finishSession() {
   showScreen('FINISHED');
 }
 
-function resetToIdle() {
-  state.status = 'IDLE';
-  state.endTime = null;
-  state.currentQuestion = null;
-  state.correctCount = 0;
-  state.wrongCount = 0;
-  state.totalAnswered = 0;
-
-  clearInterval(timerInterval);
-  timerInterval = null;
-
-  dom.timerCard.classList.remove('urgent', 'critical');
-  dom.timerDisplay.textContent = '05:00';
-  renderScores();
-  showScreen('IDLE');
-}
-
-// ─── Keyboard Listener ──────────────────────────────
+// ─── Keyboard Listener ───────────────────────────────
 function mapKeyToDigit(event) {
-  // Standard digit keys (top row)
   if (event.key >= '0' && event.key <= '9') {
     return parseInt(event.key, 10);
   }
 
-  // Numpad keys
   const numpadMap = {
     'Numpad0': 0, 'Numpad1': 1, 'Numpad2': 2, 'Numpad3': 3,
     'Numpad4': 4, 'Numpad5': 5, 'Numpad6': 6, 'Numpad7': 7,
@@ -246,28 +266,21 @@ function onKeyDown(event) {
   submitAnswer(digit);
 }
 
-// ─── Event Listeners ─────────────────────────────────
+// ─── Event Bindings ──────────────────────────────────
 document.addEventListener('keydown', onKeyDown);
 
 dom.btnStart.addEventListener('click', startSession);
 dom.btnRestart.addEventListener('click', startSession);
 
-// On-screen keypad for touch devices (UX-10)
-dom.keypad.addEventListener('click', (e) => {
-  const btn = e.target.closest('.keypad-btn');
+// On-screen keypad button clicks
+dom.currentKeypad.addEventListener('click', (e) => {
+  const btn = e.target.closest('.key-item');
   if (!btn) return;
   if (state.status !== 'RUNNING') return;
 
   const digit = parseInt(btn.dataset.digit, 10);
   submitAnswer(digit);
 });
-
-// Prevent zoom on double-tap for mobile
-document.addEventListener('touchstart', (e) => {
-  if (e.target.closest('.keypad-btn') || e.target.closest('.btn-primary')) {
-    // Allow single tap but prevent default to avoid zoom
-  }
-}, { passive: true });
 
 // ─── Initialize ──────────────────────────────────────
 showScreen('IDLE');

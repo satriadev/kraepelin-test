@@ -7,16 +7,11 @@
   <meta name="description" content="Latihan tes koran (Kraepelin) online gratis. Soal penjumlahan unlimited dengan timer 5 menit. Latih kecepatan dan ketepatan Anda!" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div id="app">
-    <!-- Background animated blobs -->
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-    <div class="bg-blob blob-3"></div>
-
     <!-- Header: Timer & Score -->
     <header id="header">
       <div class="header-inner">
@@ -63,52 +58,68 @@
             <ul>
               <li>Soal berupa penjumlahan dua angka <strong>a + b</strong></li>
               <li>Jawab dengan <strong>digit satuan</strong> dari hasil penjumlahan</li>
-              <li>Tekan angka <strong>0–9</strong> di keyboard untuk menjawab</li>
-              <li>Soal baru otomatis muncul setelah menjawab</li>
+              <li>Tekan angka <strong>0–9</strong> di keyboard atau klik tombol</li>
+              <li>Soal baru otomatis muncul seketika setelah menjawab</li>
               <li>Waktu pengerjaan: <strong>5 menit</strong></li>
             </ul>
             <div class="example-box">
               <span class="example-label">Contoh:</span>
-              <span class="example-content">15 + 7 = 2<strong>2</strong> → tekan <kbd>2</kbd></span>
+              <span class="example-content">3 + 7 = 1<strong>0</strong> → pilih <kbd>0</kbd></span>
             </div>
           </div>
           <button id="btn-start" class="btn-primary">
-            <span class="btn-icon">▶</span>
-            Mulai
+            Mulai Latihan
           </button>
         </div>
       </section>
 
-      <!-- RUNNING Screen -->
+      <!-- RUNNING Screen (Matches User's Screenshot) -->
       <section id="screen-running" class="screen">
         <div class="running-content">
-          <div class="question-container" id="question-container">
-            <div class="question-numbers">
-              <span class="question-a" id="question-a">—</span>
-              <span class="question-operator">+</span>
-              <span class="question-b" id="question-b">—</span>
+          <div class="stream-container" id="stream-container">
+            <!-- Previous Question (Answered) -->
+            <div class="question-block previous-block" id="previous-block" style="display: none;">
+              <div class="question-equation">
+                <span class="equation-num" id="prev-a">3</span>
+                <span class="equation-op">+</span>
+                <span class="equation-num" id="prev-b">7</span>
+              </div>
+              <div class="keypad-row" id="prev-keypad">
+                <div class="key-item" data-digit="0">0</div>
+                <div class="key-item" data-digit="1">1</div>
+                <div class="key-item" data-digit="2">2</div>
+                <div class="key-item" data-digit="3">3</div>
+                <div class="key-item" data-digit="4">4</div>
+                <div class="key-item" data-digit="5">5</div>
+                <div class="key-item" data-digit="6">6</div>
+                <div class="key-item" data-digit="7">7</div>
+                <div class="key-item" data-digit="8">8</div>
+                <div class="key-item" data-digit="9">9</div>
+              </div>
             </div>
-            <div class="question-equals">=</div>
-            <div class="question-answer-placeholder">?</div>
+
+            <!-- Current Active Question -->
+            <div class="question-block active-block" id="current-block">
+              <div class="question-equation">
+                <span class="equation-num" id="current-a">5</span>
+                <span class="equation-op">+</span>
+                <span class="equation-num" id="current-b">8</span>
+              </div>
+              <div class="keypad-row" id="current-keypad">
+                <button type="button" class="key-item" data-digit="0">0</button>
+                <button type="button" class="key-item" data-digit="1">1</button>
+                <button type="button" class="key-item" data-digit="2">2</button>
+                <button type="button" class="key-item" data-digit="3">3</button>
+                <button type="button" class="key-item" data-digit="4">4</button>
+                <button type="button" class="key-item" data-digit="5">5</button>
+                <button type="button" class="key-item" data-digit="6">6</button>
+                <button type="button" class="key-item" data-digit="7">7</button>
+                <button type="button" class="key-item" data-digit="8">8</button>
+                <button type="button" class="key-item" data-digit="9">9</button>
+              </div>
+            </div>
           </div>
-          <p class="hint-text">Tekan angka <kbd>0</kbd>–<kbd>9</kbd> untuk menjawab</p>
-          <!-- Feedback flash overlay -->
-          <div class="feedback-flash" id="feedback-flash"></div>
-          <!-- On-screen keypad for touch devices -->
-          <div class="keypad" id="keypad">
-            <button class="keypad-btn" data-digit="1">1</button>
-            <button class="keypad-btn" data-digit="2">2</button>
-            <button class="keypad-btn" data-digit="3">3</button>
-            <button class="keypad-btn" data-digit="4">4</button>
-            <button class="keypad-btn" data-digit="5">5</button>
-            <button class="keypad-btn" data-digit="6">6</button>
-            <button class="keypad-btn" data-digit="7">7</button>
-            <button class="keypad-btn" data-digit="8">8</button>
-            <button class="keypad-btn" data-digit="9">9</button>
-            <div class="keypad-spacer"></div>
-            <button class="keypad-btn" data-digit="0">0</button>
-            <div class="keypad-spacer"></div>
-          </div>
+          <p class="hint-bar">Tekan angka <kbd>0</kbd>–<kbd>9</kbd> pada keyboard atau klik tombol di atas</p>
         </div>
       </section>
 
@@ -142,8 +153,7 @@
             <span class="result-score-value" id="result-score">0</span>
           </div>
           <button id="btn-restart" class="btn-primary">
-            <span class="btn-icon">↻</span>
-            Ulangi
+            Ulangi Tes
           </button>
         </div>
       </section>
