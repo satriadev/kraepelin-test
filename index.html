@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Latihan Tes Koran (Kraepelin) — 5 Menit</title>
+  <meta name="description" content="Latihan tes koran (Kraepelin) online gratis. Soal penjumlahan unlimited dengan timer 5 menit. Latih kecepatan dan ketepatan Anda!" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Background animated blobs -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <!-- Header: Timer & Score -->
+    <header id="header">
+      <div class="header-inner">
+        <div class="stat-card timer-card" id="timer-card">
+          <div class="stat-icon">⏱</div>
+          <div class="stat-info">
+            <span class="stat-label">Waktu</span>
+            <span class="stat-value" id="timer-display">05:00</span>
+          </div>
+        </div>
+        <div class="stat-card correct-card" id="correct-card">
+          <div class="stat-icon">✓</div>
+          <div class="stat-info">
+            <span class="stat-label">Benar</span>
+            <span class="stat-value" id="correct-count">0</span>
+          </div>
+        </div>
+        <div class="stat-card wrong-card" id="wrong-card">
+          <div class="stat-icon">✗</div>
+          <div class="stat-info">
+            <span class="stat-label">Salah</span>
+            <span class="stat-value" id="wrong-count">0</span>
+          </div>
+        </div>
+        <div class="stat-card total-card">
+          <div class="stat-icon">∑</div>
+          <div class="stat-info">
+            <span class="stat-label">Total</span>
+            <span class="stat-value" id="total-count">0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      <!-- IDLE Screen -->
+      <section id="screen-idle" class="screen active">
+        <div class="idle-content">
+          <h1 class="app-title">Tes Koran</h1>
+          <p class="app-subtitle">Latihan Kraepelin — Penjumlahan Cepat</p>
+          <div class="instructions-card">
+            <h2>📋 Instruksi</h2>
+            <ul>
+              <li>Soal berupa penjumlahan dua angka <strong>a + b</strong></li>
+              <li>Jawab dengan <strong>digit satuan</strong> dari hasil penjumlahan</li>
+              <li>Tekan angka <strong>0–9</strong> di keyboard untuk menjawab</li>
+              <li>Soal baru otomatis muncul setelah menjawab</li>
+              <li>Waktu pengerjaan: <strong>5 menit</strong></li>
+            </ul>
+            <div class="example-box">
+              <span class="example-label">Contoh:</span>
+              <span class="example-content">15 + 7 = 2<strong>2</strong> → tekan <kbd>2</kbd></span>
+            </div>
+          </div>
+          <button id="btn-start" class="btn-primary">
+            <span class="btn-icon">▶</span>
+            Mulai
+          </button>
+        </div>
+      </section>
+
+      <!-- RUNNING Screen -->
+      <section id="screen-running" class="screen">
+        <div class="running-content">
+          <div class="question-container" id="question-container">
+            <div class="question-numbers">
+              <span class="question-a" id="question-a">—</span>
+              <span class="question-operator">+</span>
+              <span class="question-b" id="question-b">—</span>
+            </div>
+            <div class="question-equals">=</div>
+            <div class="question-answer-placeholder">?</div>
+          </div>
+          <p class="hint-text">Tekan angka <kbd>0</kbd>–<kbd>9</kbd> untuk menjawab</p>
+          <!-- Feedback flash overlay -->
+          <div class="feedback-flash" id="feedback-flash"></div>
+          <!-- On-screen keypad for touch devices -->
+          <div class="keypad" id="keypad">
+            <button class="keypad-btn" data-digit="1">1</button>
+            <button class="keypad-btn" data-digit="2">2</button>
+            <button class="keypad-btn" data-digit="3">3</button>
+            <button class="keypad-btn" data-digit="4">4</button>
+            <button class="keypad-btn" data-digit="5">5</button>
+            <button class="keypad-btn" data-digit="6">6</button>
+            <button class="keypad-btn" data-digit="7">7</button>
+            <button class="keypad-btn" data-digit="8">8</button>
+            <button class="keypad-btn" data-digit="9">9</button>
+            <div class="keypad-spacer"></div>
+            <button class="keypad-btn" data-digit="0">0</button>
+            <div class="keypad-spacer"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINISHED Screen -->
+      <section id="screen-finished" class="screen">
+        <div class="finished-content">
+          <div class="result-header">
+            <div class="result-emoji" id="result-emoji">🎯</div>
+            <h2 class="result-title">Waktu Habis!</h2>
+          </div>
+          <div class="result-grid">
+            <div class="result-item result-correct">
+              <span class="result-item-value" id="result-correct">0</span>
+              <span class="result-item-label">Benar</span>
+            </div>
+            <div class="result-item result-wrong">
+              <span class="result-item-value" id="result-wrong">0</span>
+              <span class="result-item-label">Salah</span>
+            </div>
+            <div class="result-item result-total">
+              <span class="result-item-value" id="result-total">0</span>
+              <span class="result-item-label">Total Soal</span>
+            </div>
+            <div class="result-item result-accuracy">
+              <span class="result-item-value" id="result-accuracy">0%</span>
+              <span class="result-item-label">Akurasi</span>
+            </div>
+          </div>
+          <div class="result-score-box">
+            <span class="result-score-label">Skor Akhir</span>
+            <span class="result-score-value" id="result-score">0</span>
+          </div>
+          <button id="btn-restart" class="btn-primary">
+            <span class="btn-icon">↻</span>
+            Ulangi
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
