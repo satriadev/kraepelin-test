@@ -3,17 +3,25 @@
 // Pre-generated question pool + Pace chart
 // ═══════════════════════════════════════════════════════
 
-const DURATION_MS = 5 * 60 * 1000;
 const TIMER_UPDATE_INTERVAL = 100;
 const INITIAL_POOL_SIZE = 100;   // pre-generate 100 questions
 const REFILL_THRESHOLD = 50;     // when 50 answered, add 50 more
 const REFILL_AMOUNT = 50;
+const DURATION_OPTIONS = [5, 10, 15, 30]; // allowed durations in minutes
+
+// ─── Settings (chosen on idle screen) ────────────────
+let settings = {
+  durationMin: 5,          // 5 | 10 | 15 | 30
+  mode: 'HARD',            // 'HARD' | 'EASY'
+};
 
 // ─── State ───────────────────────────────────────────
 let state = {
   status: 'IDLE',          // 'IDLE' | 'RUNNING' | 'FINISHED'
   startTime: null,
   endTime: null,
+  durationMs: 5 * 60 * 1000, // actual duration of current session
+  mode: 'HARD',              // 'HARD' | 'EASY' of current session
   questionPool: [],        // Array of { a, b, correctDigit, answered, chosenDigit, isCorrect }
   currentIndex: 0,         // index into questionPool of the active question
   correctCount: 0,
@@ -46,12 +54,19 @@ const dom = {
   btnStart: $('btn-start'),
   btnRestart: $('btn-restart'),
 
+  modeOptions: $('mode-options'),
+  durationOptions: $('duration-options'),
+  modeDesc: $('mode-desc'),
+  instrRange: $('instr-range'),
+  instrDuration: $('instr-duration'),
+
   resultCorrect: $('result-correct'),
   resultWrong: $('result-wrong'),
   resultTotal: $('result-total'),
   resultAccuracy: $('result-accuracy'),
   resultScore: $('result-score'),
   resultEmoji: $('result-emoji'),
+  resultSubtitle: $('result-subtitle'),
   paceChart: $('pace-chart'),
 };
 
@@ -73,8 +88,14 @@ const RESULT_ICONS = {
 
 // ─── Question Pool Generator ─────────────────────────
 function generateQuestion() {
-  const a = Math.floor(Math.random() * 99) + 1;
-  const b = Math.floor(Math.random() * 99) + 1;
+  // HARD: two numbers 1–99 (current behavior)
+  // EASY: units addition only, both operands 0–9
+  const a = state.mode === 'EASY'
+    ? Math.floor(Math.random() * 10)   // 0–9
+    : Math.floor(Math.random() * 99) + 1; // 1–99
+  const b = state.mode === 'EASY'
+    ? Math.floor(Math.random() * 10)   // 0–9
+    : Math.floor(Math.random() * 99) + 1; // 1–99
   const correctDigit = (a + b) % 10;
   return { a, b, correctDigit, answered: false, chosenDigit: null, isCorrect: null };
 }
@@ -304,7 +325,9 @@ function startSession() {
   // Reset state
   state.status = 'RUNNING';
   state.startTime = Date.now();
-  state.endTime = Date.now() + DURATION_MS;
+  state.durationMs = settings.durationMin * 60 * 1000;
+  state.mode = settings.mode;
+  state.endTime = Date.now() + state.durationMs;
   state.correctCount = 0;
   state.wrongCount = 0;
   state.totalAnswered = 0;
@@ -316,7 +339,7 @@ function startSession() {
 
   // Reset UI
   dom.timerCard.classList.remove('urgent', 'critical');
-  dom.timerDisplay.textContent = '05:00';
+  dom.timerDisplay.textContent = formatTime(state.durationMs);
   renderScores();
   renderPool();
   showScreen('RUNNING');
@@ -352,6 +375,8 @@ function finishSession() {
   dom.resultAccuracy.textContent = `${accuracy.toFixed(1)}%`;
   dom.resultScore.textContent = state.correctCount;
   dom.resultEmoji.innerHTML = RESULT_ICONS[iconKey] || RESULT_ICONS.trophy;
+  dom.resultSubtitle.textContent =
+    `Mode ${state.mode === 'EASY' ? 'Easy' : 'Hard'} · ${state.durationMs / 60000} Menit`;
 
   showScreen('FINISHED');
   drawPaceChart();
@@ -372,11 +397,15 @@ function drawPaceChart() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  // Calculate pace data: answers per minute (5 buckets)
+  // Calculate pace data bucketed into ~5 bars regardless of duration
+  const totalMinutes = Math.round(state.durationMs / 60000);
+  const bucketMinutes = Math.max(1, Math.ceil(totalMinutes / 5));
+  const bucketCount = Math.ceil(totalMinutes / bucketMinutes);
+
   const minuteData = [];
-  for (let m = 0; m < 5; m++) {
-    const bucketStart = state.startTime + m * 60000;
-    const bucketEnd = state.startTime + (m + 1) * 60000;
+  for (let m = 0; m < bucketCount; m++) {
+    const bucketStart = state.startTime + m * bucketMinutes * 60000;
+    const bucketEnd = state.startTime + (m + 1) * bucketMinutes * 60000;
 
     let correct = 0;
     let wrong = 0;
@@ -388,7 +417,10 @@ function drawPaceChart() {
       }
     }
 
-    minuteData.push({ minute: m + 1, correct, wrong, total: correct + wrong });
+    const label = bucketMinutes === 1
+      ? `Menit ${m + 1}`
+      : `Menit ${m * bucketMinutes + 1}–${(m + 1) * bucketMinutes}`;
+    minuteData.push({ label, correct, wrong, total: correct + wrong });
   }
 
   const maxTotal = Math.max(...minuteData.map((d) => d.total), 1);
@@ -470,7 +502,7 @@ function drawPaceChart() {
     ctx.font = '600 11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(`Menit ${d.minute}`, x + barWidth / 2, barBottom + 10);
+    ctx.fillText(d.label, x + barWidth / 2, barBottom + 10);
   }
 }
 
@@ -538,11 +570,67 @@ function onKeyDown(event) {
   submitAnswer(digit);
 }
 
+// ─── Settings Selection ──────────────────────────────
+const MODE_DESC = {
+  HARD: 'Dua angka 1–99, jawab dengan digit satuan hasil penjumlahan',
+  EASY: 'Penjumlahan angka satuan saja (0–9 + 0–9)',
+};
+
+function renderSettingsUI() {
+  // Mode buttons
+  dom.modeOptions.querySelectorAll('.segment').forEach((btn) => {
+    const active = btn.dataset.mode === settings.mode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', active ? 'true' : 'false');
+  });
+
+  // Duration buttons
+  dom.durationOptions.querySelectorAll('.segment').forEach((btn) => {
+    const active = parseInt(btn.dataset.minutes, 10) === settings.durationMin;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', active ? 'true' : 'false');
+  });
+
+  // Instruction texts
+  dom.modeDesc.textContent = MODE_DESC[settings.mode];
+  dom.instrRange.innerHTML = settings.mode === 'EASY'
+    ? 'Soal berupa penjumlahan dua angka satuan <strong>0 – 9</strong>'
+    : 'Soal berupa penjumlahan dua angka <strong>a + b</strong> (1–99)';
+  dom.instrDuration.textContent = `${settings.durationMin} menit`;
+
+  // Header timer preview while idle
+  if (state.status !== 'RUNNING') {
+    dom.timerDisplay.textContent = formatTime(settings.durationMin * 60000);
+  }
+}
+
 // ─── Event Bindings ──────────────────────────────────
 document.addEventListener('keydown', onKeyDown);
 
 dom.btnStart.addEventListener('click', startSession);
-dom.btnRestart.addEventListener('click', startSession);
+// After a test, restart returns to the setup screen so duration/mode can be changed
+dom.btnRestart.addEventListener('click', () => {
+  state.status = 'IDLE';
+  dom.timerCard.classList.remove('urgent', 'critical');
+  showScreen('IDLE');
+  renderSettingsUI();
+});
+
+dom.modeOptions.addEventListener('click', (e) => {
+  const btn = e.target.closest('.segment');
+  if (!btn) return;
+  settings.mode = btn.dataset.mode;
+  renderSettingsUI();
+});
+
+dom.durationOptions.addEventListener('click', (e) => {
+  const btn = e.target.closest('.segment');
+  if (!btn) return;
+  const minutes = parseInt(btn.dataset.minutes, 10);
+  if (!DURATION_OPTIONS.includes(minutes)) return;
+  settings.durationMin = minutes;
+  renderSettingsUI();
+});
 
 // Delegated click handler on the stream container for keypad buttons
 dom.streamContainer.addEventListener('click', (e) => {
@@ -568,4 +656,5 @@ window.addEventListener('resize', () => {
 window.__finishSession = finishSession;
 
 // ─── Initialize ──────────────────────────────────────
+renderSettingsUI();
 showScreen('IDLE');
